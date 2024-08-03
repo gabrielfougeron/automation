@@ -1,11 +1,12 @@
 import subprocess
 import os
-from youtube_dl import YoutubeDL
+# from youtube_dl import YoutubeDL
+from yt_dlp import YoutubeDL
 import difflib
 import time
 
 ytdl_replace_rules = {
-    "|": "_",
+    "|": "｜",
 }
 
 google_replace_rules = {
@@ -69,6 +70,7 @@ folder_id = folder_list[0]["id"]
 
 ydl_opts = {
     'quiet': True,
+    'format': 'mp3/bestaudio/best',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
@@ -95,6 +97,13 @@ for line in lines:
         
         filename = str_replace(video['title']+'.mp3', ytdl_replace_rules)
         full_filename = os.path.join(files_folder, filename)
+        
+        # 
+        # Not All Programmers Are Good | Prime Reacts.mp3 
+        # Not All Programmers Are Good ｜ Prime Reacts
+        # 
+        print("looking for ")
+        print(full_filename)
         
         if not os.path.exists(full_filename):
         
@@ -145,8 +154,12 @@ for line in lines:
                 )
                 .execute()
             )
+            
+            print(results.get("files", []))
 
             file_exists = (len(results.get("files", [])) > 0)
+            
+            print(file_exists)
             
             print(f'File found in Google Drive : {file_exists}')
             
