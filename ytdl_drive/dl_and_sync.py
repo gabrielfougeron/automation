@@ -98,12 +98,7 @@ for line in lines:
         filename = str_replace(video['title']+'.mp3', ytdl_replace_rules)
         full_filename = os.path.join(files_folder, filename)
         
-        # 
-        # Not All Programmers Are Good | Prime Reacts.mp3 
-        # Not All Programmers Are Good ｜ Prime Reacts
-        # 
-        print("looking for ")
-        print(full_filename)
+        print(f"Looking for audio file {full_filename}")
         
         if not os.path.exists(full_filename):
         
@@ -133,6 +128,9 @@ for line in lines:
                 print("Downloaded video and extracted audio")
             else: 
                 print("Download failed")
+                
+        else:
+            print("Audio file found")
 
         # if not os.path.exists(filename):
         #     
