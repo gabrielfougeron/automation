@@ -45,7 +45,11 @@ jobs:
 
     - name: Copy to Drive
       run: |
+
         cd ytdl_drive
+
+        youtube-dl --rm-cache-dir
+        echo "${{ secrets.YT_PLAYLIST_URL }}" > url_list.txt
         mkdir -p files
 
         python -c "import os; file = open('credentials.json', 'w'); file.write(os.environ['GOOGLE_CRED']); file.close()"
