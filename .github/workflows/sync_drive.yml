@@ -1,0 +1,66 @@
+name: sync_drive
+
+on:
+  workflow_dispatch:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '56 1 * * *'
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12.1
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install apt dependencies
+      run: |
+        sudo apt update
+        sudo apt install ffmpeg
+
+    - name: Install python dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r ytdl_drive/requirements.txt
+ 
+    - name: DL files
+      run: |
+        cd ytdl_drive
+        youtube-dl --rm-cache-dir
+        echo "${{ secrets.YT_PLAYLIST_URL }}" > url_list.txt
+        youtube-dl -x -i --yes-playlist --audio-format mp3 -a url_list.txt
+        mkdir -p files
+        mv *.mp3 files/
+
+    - name: Copy to Drive
+      run: |
+        cd ytdl_drive
+
+        python -c "import os; file = open('credentials.json', 'w'); file.write(os.environ['GOOGLE_CRED']); file.close()"
+        python -c "import os; file = open('token.json', 'w'); file.write(os.environ['GOOGLE_TOKEN']); file.close()"
+
+        python dl_and_sync.py
+      shell: bash
+      env:
+        GOOGLE_CRED : ${{secrets.GOOGLE_CRED}}
+        GOOGLE_TOKEN : ${{secrets.GOOGLE_TOKEN}}

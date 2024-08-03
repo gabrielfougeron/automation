@@ -1,0 +1,10 @@
+ytdl_drive/credentials.json
+ytdl_drive/token.json
+ytdl_drive/url_list.txt
+ytdl_drive/files/*
+ytdl_drive/temp/*
+*.ytdl
+*.part
+*.mp4
+*.webm
+*.part
