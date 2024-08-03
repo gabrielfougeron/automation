@@ -48,7 +48,6 @@ jobs:
 
         cd ytdl_drive
 
-        youtube-dl --rm-cache-dir
         echo "${{ secrets.YT_PLAYLIST_URL }}" > url_list.txt
         mkdir -p files
 
