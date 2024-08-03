@@ -42,19 +42,11 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -r ytdl_drive/requirements.txt
- 
-    - name: DL files
-      run: |
-        cd ytdl_drive
-        youtube-dl --rm-cache-dir
-        echo "${{ secrets.YT_PLAYLIST_URL }}" > url_list.txt
-        youtube-dl -x -i --yes-playlist --audio-format mp3 -a url_list.txt
-        mkdir -p files
-        mv *.mp3 files/
 
     - name: Copy to Drive
       run: |
         cd ytdl_drive
+        mkdir -p files
 
         python -c "import os; file = open('credentials.json', 'w'); file.write(os.environ['GOOGLE_CRED']); file.close()"
         python -c "import os; file = open('token.json', 'w'); file.write(os.environ['GOOGLE_TOKEN']); file.close()"
