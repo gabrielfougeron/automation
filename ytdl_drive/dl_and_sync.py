@@ -70,7 +70,7 @@ folder_id = folder_list[0]["id"]
 
 ydl_opts = {
     'quiet': True,
-    'format': 'mp3/bestaudio/best',
+    # 'format': 'mp3/bestaudio/best',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
