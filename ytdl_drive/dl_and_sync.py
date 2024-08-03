@@ -83,12 +83,12 @@ ydl_opts = {
 n_retries_max = 10
 
 ydl = YoutubeDL(ydl_opts)
-ydl.add_default_info_extractors()
 
 with open("url_list.txt","r") as f:
     lines = f.readlines()
 
 for line in lines:
+    
     playlist = ydl.extract_info(line, download=False)
     
     for video in playlist['entries']:
