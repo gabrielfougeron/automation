@@ -3,11 +3,33 @@ import os
 # from youtube_dl import YoutubeDL
 from yt_dlp import YoutubeDL
 import difflib
+import numpy as np
 import time
 
-ytdl_replace_rules = {
-    "|": "｜",
-}
+def find_file_in_dir(directory, filename, thresh = 0.9):
+    
+    all_files = []
+    all_scores = []
+    
+    for f in os.listdir(directory):
+        fullname = os.path.join(directory, f)
+        if os.path.isfile(fullname):
+            all_files.append(fullname)
+            all_scores.append(difflib.SequenceMatcher(None, f, filename).ratio())
+            
+    all_scores = np.array(all_scores)
+    if all_scores.shape[0] > 0:
+        idx_sort = np.argsort(all_scores)
+        max_score = all_scores[idx_sort[-1]]
+        
+        if max_score > thresh:
+            return all_files[idx_sort[-1]]
+        else:
+            return None
+        
+    else:
+        return None
+    
 
 google_replace_rules = {
     "'": " ",
@@ -90,17 +112,19 @@ with open("url_list.txt","r") as f:
 for line in lines:
     
     playlist = ydl.extract_info(line, download=False)
+    n_videos = len(playlist['entries'])
     
     for video in playlist['entries']:
         print()
-        print(f'Video #{video['playlist_index']}:  {video['title']}')
+        print(f'Video #{video['playlist_index']} of {n_videos}:  {video['title']}')
         
-        filename = str_replace(video['title']+'.mp3', ytdl_replace_rules)
-        full_filename = os.path.join(files_folder, filename)
+        filename = video['title']+'.mp3'
         
-        print(f"Looking for audio file {full_filename}")
+        print(f"Looking for audio file {filename}")
         
-        if not os.path.exists(full_filename):
+        full_filename = find_file_in_dir(files_folder, filename)
+
+        if full_filename is None:
         
             print("Audio file not found, downloading")
             
@@ -132,14 +156,10 @@ for line in lines:
         else:
             print("Audio file found")
 
-        # if not os.path.exists(filename):
-        #     
-        #     for test_filename in os.listdir(files_folder):
-        #         test_filename = os.path.join(files_folder, test_filename)
-        #         
-        #         difflib.SequenceMatcher
+        # Again!
+        full_filename = find_file_in_dir(files_folder, filename)
  
-        if os.path.exists(full_filename):
+        if full_filename is not None:
             
             gdrive_filename = str_replace(filename, google_replace_rules)
             
@@ -153,11 +173,7 @@ for line in lines:
                 .execute()
             )
             
-            print(results.get("files", []))
-
             file_exists = (len(results.get("files", [])) > 0)
-            
-            print(file_exists)
             
             print(f'File found in Google Drive : {file_exists}')
             
