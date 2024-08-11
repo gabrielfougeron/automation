@@ -33,6 +33,14 @@ def find_file_in_dir(directory, filename, thresh = 0.9):
 
 google_replace_rules = {
     "'": " ",
+    "：": " ",
+    "？": " ",
+    "｜": " ",
+    "?": " ",
+    "|": " ",
+    "*": " ",
+    "<": " ",
+    ">": " ",
 }
 
 def str_replace(input_str, replace_rules = {}):
@@ -158,11 +166,14 @@ for line in lines:
 
         # Again!
         full_filename = find_file_in_dir(files_folder, filename)
- 
+     
         if full_filename is not None:
             
             gdrive_filename = str_replace(filename, google_replace_rules)
             
+            new_filename = os.path.join(files_folder, gdrive_filename)
+            os.rename(full_filename, new_filename)
+
             results = (
                 service.files()
                 .list(
@@ -179,10 +190,10 @@ for line in lines:
             
             if not file_exists:
             
-                file_size = os.stat(full_filename).st_size
+                file_size = os.stat(new_filename).st_size
                 mimetype = "audio/mpeg"
                 chunksize = 262144
-                media = MediaFileUpload(full_filename, mimetype=mimetype, resumable=True, chunksize=chunksize)
+                media = MediaFileUpload(new_filename, mimetype=mimetype, resumable=True, chunksize=chunksize)
 
                 request = (
                     service.files()
@@ -201,4 +212,3 @@ for line in lines:
         else:
             print(filename)
             print("Where is file ????")
-        
