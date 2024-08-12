@@ -30,17 +30,19 @@ def find_file_in_dir(directory, filename, thresh = 0.9):
     else:
         return None
     
-
 google_replace_rules = {
     "'": " ",
     "：": " ",
     "？": " ",
     "｜": " ",
+    "⧸": " ",
     "?": " ",
     "|": " ",
     "*": " ",
     "<": " ",
     ">": " ",
+    "/": " ",
+    "\\": " ",
 }
 
 def str_replace(input_str, replace_rules = {}):
@@ -51,7 +53,6 @@ def str_replace(input_str, replace_rules = {}):
     
     return res
     
-
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
