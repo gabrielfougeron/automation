@@ -1,7 +1,9 @@
 import subprocess
 import os
-# from youtube_dl import YoutubeDL
-from yt_dlp import YoutubeDL
+
+from youtube_dl import YoutubeDL
+# from yt_dlp import YoutubeDL
+
 import difflib
 import numpy as np
 import time
@@ -64,6 +66,8 @@ from googleapiclient.http import MediaFileUpload
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 files_folder = os.path.join(os.path.dirname(__file__), 'files')
+if not os.path.exists(files_folder):
+    os.makedirs(files_folder)
 
 creds = None
 # The file token.json stores the user's access and refresh tokens, and is
@@ -118,22 +122,34 @@ ydl = YoutubeDL(ydl_opts)
 with open("url_list.txt","r") as f:
     lines = f.readlines()
 
-for line in lines:
-    
+for iplaylist, line in enumerate(lines):
+
     line = line.replace('\n','')
 
     playlist = ydl.extract_info(line, download=False)
+    
+
+    print()
+    print("="*50)
+    print(f'Playlist {iplaylist+1} of {len(lines)}: {playlist["title"]}')
+    print("="*50)
+    
+    playlist_dir = os.path.join(files_folder, str_replace(playlist["title"], google_replace_rules))
+    
+    if not os.path.exists(playlist_dir):
+        os.makedirs(playlist_dir)
+    
     n_videos = len(playlist['entries'])
     
     for video in playlist['entries']:
         print()
-        print(f'Video #{video['playlist_index']} of {n_videos}:  {video['title']}')
+        print(f'Video #{video['playlist_index']} of {n_videos}: {video['title']}')
         
         filename = video['title']+'.mp3'
         
         print(f"Looking for audio file {filename}")
         
-        full_filename = find_file_in_dir(files_folder, filename)
+        full_filename = find_file_in_dir(playlist_dir, filename)
 
         if full_filename is None:
         
@@ -168,13 +184,13 @@ for line in lines:
             print("Audio file found")
 
         # Again!
-        full_filename = find_file_in_dir(files_folder, filename)
+        full_filename = find_file_in_dir(playlist_dir, filename)
      
         if full_filename is not None:
             
             gdrive_filename = str_replace(filename, google_replace_rules)
             
-            new_filename = os.path.join(files_folder, gdrive_filename)
+            new_filename = os.path.join(playlist_dir, gdrive_filename)
             os.rename(full_filename, new_filename)
 
             results = (
