@@ -120,6 +120,8 @@ with open("url_list.txt","r") as f:
 
 for line in lines:
     
+    line = line.replace('\n','')
+
     playlist = ydl.extract_info(line, download=False)
     n_videos = len(playlist['entries'])
     
