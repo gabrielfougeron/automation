@@ -1,8 +1,8 @@
 import subprocess
 import os
 
-from youtube_dl import YoutubeDL
-# from yt_dlp import YoutubeDL
+# from youtube_dl import YoutubeDL
+from yt_dlp import YoutubeDL
 
 import difflib
 import numpy as np
@@ -32,25 +32,25 @@ def find_file_in_dir(directory, filename, thresh = 0.9):
     else:
         return None
     
-google_replace_rules = {
-    "'": " ",
+filename_replace_rules = {
+    "'": "",
     "：": " ",
     "？": " ",
     "｜": " ",
     "⧸": " ",
     "?": " ",
     "|": " ",
-    "*": " ",
-    "<": " ",
-    ">": " ",
+    "*": "",
+    "<": "",
+    ">": "",
     "/": " ",
     "\\": " ",
 }
 
-def str_replace(input_str, replace_rules = {}):
+def str_replace(input_str, rules = filename_replace_rules):
     
     res = input_str
-    for key, val in replace_rules.items():
+    for key, val in rules.items():
         res = res.replace(key, val)
     
     return res
@@ -100,7 +100,7 @@ results = (
 )
 folder_list = results.get("files", [])
 assert len(folder_list) == 1
-folder_id = folder_list[0]["id"]
+main_folder_id = folder_list[0]["id"]
 
 
 ydl_opts = {
@@ -128,16 +128,48 @@ for iplaylist, line in enumerate(lines):
 
     playlist = ydl.extract_info(line, download=False)
     
+    playlist_title = str_replace(playlist["title"])
 
     print()
     print("="*50)
-    print(f'Playlist {iplaylist+1} of {len(lines)}: {playlist["title"]}')
+    print(f'Playlist {iplaylist+1} of {len(lines)}: {playlist_title}')
     print("="*50)
     
-    playlist_dir = os.path.join(files_folder, str_replace(playlist["title"], google_replace_rules))
+    playlist_dir = os.path.join(files_folder, playlist_title)
     
     if not os.path.exists(playlist_dir):
         os.makedirs(playlist_dir)
+    
+    # Does playlist exist in Gdrive ?
+
+    folder_list = (
+        service.files()
+        .list(
+            q=f"name='{playlist_title}' and '{main_folder_id}' in parents and mimeType = 'application/vnd.google-apps.folder'",
+            fields="files(id, name)",
+        )
+        .execute()
+        .get("files", [])
+    )
+    
+    if len(folder_list) == 0:
+                
+        playlist_folder_id = (
+            service.files()
+            .create(
+                body = {
+                    'name': playlist_title,
+                    'mimeType': 'application/vnd.google-apps.folder',
+                    'parents': [main_folder_id],
+                },
+                fields='id')
+            .execute().get('id')
+        )
+        
+    else:
+        playlist_folder_id = folder_list[0].get('id')
+        
+
     
     n_videos = len(playlist['entries'])
     
@@ -185,10 +217,12 @@ for iplaylist, line in enumerate(lines):
 
         # Again!
         full_filename = find_file_in_dir(playlist_dir, filename)
+        if full_filename is None:
+            full_filename = find_file_in_dir(files_folder, filename)
      
         if full_filename is not None:
             
-            gdrive_filename = str_replace(filename, google_replace_rules)
+            gdrive_filename = str_replace(filename)
             
             new_filename = os.path.join(playlist_dir, gdrive_filename)
             os.rename(full_filename, new_filename)
@@ -196,7 +230,7 @@ for iplaylist, line in enumerate(lines):
             results = (
                 service.files()
                 .list(
-                    q=f"name='{gdrive_filename}' and '{folder_id}' in parents",
+                    q=f"name='{gdrive_filename}' and '{main_folder_id}' in parents",
                     pageSize=5,
                     fields="nextPageToken, files(id, name)",
                 )
@@ -218,7 +252,7 @@ for iplaylist, line in enumerate(lines):
                     service.files()
                     .create(
                         body = {
-                            'parents' : [folder_id],
+                            'parents' : [playlist_folder_id],
                             'name': gdrive_filename,
                         },
                         media_body = media
