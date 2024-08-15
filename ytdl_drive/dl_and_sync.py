@@ -1,8 +1,8 @@
 import subprocess
 import os
 
-# from youtube_dl import YoutubeDL
-from yt_dlp import YoutubeDL
+from youtube_dl import YoutubeDL
+# from yt_dlp import YoutubeDL
 
 import difflib
 import numpy as np
@@ -216,9 +216,10 @@ for iplaylist, line in enumerate(lines):
             print("Audio file found")
 
         # Again!
-        full_filename = find_file_in_dir(playlist_dir, filename)
-        if full_filename is None:
-            full_filename = find_file_in_dir(files_folder, filename)
+        for directory in [playlist_dir, files_folder]:
+            full_filename = find_file_in_dir(directory, filename)
+            if full_filename is not None:
+                break
      
         if full_filename is not None:
             
@@ -227,18 +228,23 @@ for iplaylist, line in enumerate(lines):
             new_filename = os.path.join(playlist_dir, gdrive_filename)
             os.rename(full_filename, new_filename)
 
-            results = (
-                service.files()
-                .list(
-                    q=f"name='{gdrive_filename}' and '{main_folder_id}' in parents",
-                    pageSize=5,
-                    fields="nextPageToken, files(id, name)",
+            for folder_id in [main_folder_id, playlist_folder_id]:
+                
+                results = (
+                    service.files()
+                    .list(
+                        q=f"name='{gdrive_filename}' and '{folder_id}' in parents",
+                        pageSize=5,
+                        fields="nextPageToken, files(id, name)",
+                    )
+                    .execute()
                 )
-                .execute()
-            )
-            
-            file_exists = (len(results.get("files", [])) > 0)
-            
+                
+                file_exists = (len(results.get("files", [])) > 0)
+                
+                if file_exists:
+                    break
+                
             print(f'File found in Google Drive : {file_exists}')
             
             if not file_exists:
