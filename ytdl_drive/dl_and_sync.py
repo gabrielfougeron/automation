@@ -1,8 +1,8 @@
 import subprocess
 import os
 
-from youtube_dl import YoutubeDL
-# from yt_dlp import YoutubeDL
+# from youtube_dl import YoutubeDL
+from yt_dlp import YoutubeDL
 
 import difflib
 import numpy as np
@@ -38,20 +38,40 @@ filename_replace_rules = {
     "？": " ",
     "｜": " ",
     "⧸": " ",
+    "＂": " ",
     "?": " ",
     "|": " ",
+    ":": " ",
     "*": "",
     "<": "",
     ">": "",
     "/": " ",
-    "\\": " ",
+    "+": " ",
+    "[": " ",
+    "]": " ",
+    ":": " ",
+    '"': " ",
+    "'": " ",
+    "é": "e",
+    "è": "e",
+    "ê": "e",
+    "à": "a",
+    "  ": " ",   
 }
 
-def str_replace(input_str, rules = filename_replace_rules):
+filename_start_replace_rules = {
+    " ": "",  
+}
+
+def str_replace(input_str, rules = filename_replace_rules, start_rules = filename_start_replace_rules):
     
     res = input_str
     for key, val in rules.items():
         res = res.replace(key, val)
+    
+    for key, val in start_rules.items():
+        while res.startswith(key):
+            res = res[len(key):]
     
     return res
     
