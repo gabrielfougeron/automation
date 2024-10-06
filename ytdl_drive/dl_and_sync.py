@@ -81,6 +81,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
+from google.auth.exceptions import RefreshError
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/drive"]
@@ -98,9 +99,16 @@ if os.path.exists("token.json"):
     
 # If there are no (valid) credentials available, let the user log in.
 if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    else:
+    NeedsRefresh = creds and creds.expired and creds.refresh_token
+    
+    if NeedsRefresh:
+        try:
+            creds.refresh(Request())
+            TokenProbablyInvalid = False
+        except RefreshError:
+            TokenProbablyInvalid = True
+            
+    if (not(NeedsRefresh)) or TokenProbablyInvalid:
         flow = InstalledAppFlow.from_client_secrets_file(
             "credentials.json", SCOPES
         )
